@@ -35,11 +35,18 @@ while True:
             for ppid, pids in gpu_process_tree.items():
                 key = (device.index, ppid)
                 current_active_processes.add(key)
+                tmp_status = 0
                 for pid in pids:
                     if pid_to_snapshot[pid].gpu_sm_utilization == 0 and pid_to_snapshot[pid].cpu_percent <= 1.0:
-                        inactive_tracker[key] = inactive_tracker.get(key, 0) + 1
+                        tmp_status += 1
                     else:
-                        inactive_tracker[key] = 0
+                        tmp_status = 0
+
+                if tmp_status > 0:
+                    inactive_tracker[key] = inactive_tracker.get(key, 0) + 1
+                else:
+                    inactive_tracker[key] = 0
+
                 if inactive_tracker[key] >= THRESHOLD:
                     kill_process(ppid)
                     inactive_tracker.pop(key, None)
